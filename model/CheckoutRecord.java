@@ -11,10 +11,11 @@ public class CheckoutRecord implements Serializable{
 	private List<CheckoutRecordEntry> entries = new ArrayList<>();
 	
 	public static void printEntries(List<CheckoutRecordEntry> entries){
-		for (CheckoutRecordEntry cre: entries){
-			System.out.println(cre.toString());
-		}
-	}	
+		//for (CheckoutRecordEntry cre: entries){
+		//	System.out.println(cre.toString());
+		//}
+		LambdaLibrary.PRINTENTRIES.accept(entries);
+	}
 	
 	public void addEntry(CheckoutRecordEntry c) {
 		entries.add(c);

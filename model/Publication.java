@@ -19,11 +19,6 @@ abstract public class Publication implements Serializable {
 	private List<LendableCopy> Copys = new ArrayList<>();
 	int maxCheckoutLength;
 	
-	public final static Function<List<LendableCopy>, List<LendableCopy>> NEXTAVAILABLECOPY
-	   = (list) -> list.stream()
-                     .filter(c -> c.isCheckOut() == false)
-                     .collect(Collectors.toList());
-	   
 	public void setDateDue(LocalDate d) {
 		dateDue = d;
 	}
@@ -60,15 +55,18 @@ abstract public class Publication implements Serializable {
 		
 		return null;
 	}
+	
 	public LendableCopy getNextAvailableCopyLambda() {
 		if (Copys.size() <= 0){
 			return null;
 		}
-		if (!NEXTAVAILABLECOPY.apply(Copys).isEmpty()){
-			return NEXTAVAILABLECOPY.apply(Copys).get(0);
+		List<LendableCopy> availCop = LambdaLibrary.NEXTAVAILABLECOPY.apply(Copys);
+		if (!availCop.isEmpty()){
+			return availCop.get(0);
 		}
 		return null;
 	}
+	
 	public String toString() {
 		return 	"MaxCheckoutLength : " + maxCheckoutLength + 
 				", Title: " + title + 
