@@ -214,7 +214,7 @@ public class CopyController extends BaseController {
         	else if (books.containsKey(strISBN)) {
         		Book book = books.get(strISBN);
         		book.addCopy();
-        		bRet = bookService.updateBook(book,false);
+        		bRet = bookService.updateBook(book,true);
     		}
 		} 
     	catch (Exception e) {
