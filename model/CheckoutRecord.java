@@ -36,6 +36,18 @@ public class CheckoutRecord implements Serializable{
 		}
 		return false;
 	}
+	public CheckoutRecordEntry getEntryByCopyNo(String copyNo){
+		if (!this.entries.isEmpty()){
+			for (CheckoutRecordEntry entry: this.entries){
+				if (entry.getCopy() != null){
+					if (entry.getCopy().getCopyNo().equals(copyNo)){
+						return entry;
+					}
+				}
+			}
+		}
+		return null;
+	}
 	public List<CheckoutRecordEntry> getEntry(){
 		return this.entries;
 	}

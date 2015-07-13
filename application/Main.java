@@ -1,5 +1,7 @@
 package application;
 	
+import java.time.LocalDate;
+
 import controller.FXMLCheckOutController;
 import controller.FXMLController;
 import javafx.application.Application;
@@ -20,7 +22,7 @@ public class Main extends Application {
 			FXMLController checkoutController = new FXMLCheckOutController();
 			checkoutController.initPanel();
 			checkoutController.showPanel();
-			
+
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

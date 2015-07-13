@@ -1,17 +1,28 @@
 package controller;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.DateCell;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableColumn.CellEditEvent;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -27,7 +38,12 @@ import model.LibraryMember;
 import Services.UserService;
 
 import java.time.LocalDate;
+import java.time.MonthDay;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import dataAccess.DataAccess;
+import dataAccess.DataAccessFacade;
 
 public class MemberController {
 
@@ -507,7 +523,7 @@ public class MemberController {
         TableView table;
         label.setFont(new Font("Arial", 20));
 
-        table=getTable(libraryMember.getRecord());
+        table=getTable(libraryMember);
         table.setEditable(true);
         final VBox vbox = new VBox();
         vbox.setSpacing(5);
@@ -528,8 +544,11 @@ public class MemberController {
 		
 	}
 
-    private TableView getTable(CheckoutRecord record){
-        List<CheckoutRecordEntry> entries = record.getEntry();
+    private TableView getTable(LibraryMember libraryMember){
+    	
+        List<CheckoutRecordEntry> entries = libraryMember.getRecord().getEntry();
+		DataAccess da = new DataAccessFacade();
+
         final TableView<CheckoutRecordEntry> table1=new TableView<>();
         table1.setMinWidth(400);
         table1.setMinHeight(100);
@@ -542,25 +561,133 @@ public class MemberController {
 
         table1.setEditable(true);
 
-        TableColumn idCol = new TableColumn("Checkout Date");
-        idCol.setMinWidth(100);
-        idCol.setCellValueFactory(
+        TableColumn checkoutCol = new TableColumn("Checkout Date");
+        checkoutCol.setMinWidth(100);
+        checkoutCol.setCellValueFactory(
                 new PropertyValueFactory<CheckoutRecordEntry, LocalDate>("checkoutDate")
         );
-        TableColumn firstNameCol = new TableColumn("Due Date");
-        firstNameCol.setMinWidth(100);
-        firstNameCol.setCellValueFactory(
+        
+        checkoutCol.setCellFactory(col -> new LocalDateCell());
+        checkoutCol.setOnEditCommit(
+            new EventHandler<CellEditEvent<CheckoutRecordEntry, LocalDate>>() {
+                public void handle(CellEditEvent<CheckoutRecordEntry, LocalDate> t) {
+                    ((CheckoutRecordEntry) t.getTableView().getItems().get(
+                        t.getTablePosition().getRow())
+                        ).setCheckoutDate(t.getNewValue());
+                    // save the updates to storage
+            		da.updateMember(libraryMember);
+                }
+            }
+        );
+
+        TableColumn dueCol = new TableColumn("Due Date");
+        dueCol.setMinWidth(100);
+        dueCol.setCellValueFactory(
                 new PropertyValueFactory<CheckoutRecordEntry, LocalDate>("dueDate"));
 
+        dueCol.setCellFactory(col -> new LocalDateCell());
+        dueCol.setOnEditCommit(
+            new EventHandler<CellEditEvent<CheckoutRecordEntry, LocalDate>>() {
+                public void handle(CellEditEvent<CheckoutRecordEntry, LocalDate> t) {
+                    ((CheckoutRecordEntry) t.getTableView().getItems().get(
+                        t.getTablePosition().getRow())
+                        ).setDueDate(t.getNewValue());
+                    // save the updates to storage
+            		da.updateMember(libraryMember); // save member checkout record
+                }
+            }
+        );
+        
         TableColumn copyCol= new TableColumn("Copy");
         copyCol.setMinWidth(200);
         copyCol.setCellValueFactory(
                 new PropertyValueFactory<CheckoutRecordEntry, LendableCopy>("copy")
         );
+
         table1.setItems(recordEntries);
-        table1.getColumns().addAll(idCol, firstNameCol,copyCol);
+        table1.getColumns().addAll(checkoutCol, dueCol,copyCol);
 
         return table1;
     }
 
+    public static class LocalDateCell extends TableCell<CheckoutRecordEntry, LocalDate> {
+        
+        private final DateTimeFormatter formatter ;
+        private final DatePicker datePicker ;
+        
+        public LocalDateCell() {
+            
+            formatter = DateTimeFormatter.ofPattern("MM-dd-yyyy") ;
+            datePicker = new DatePicker() ;
+            
+            // Commit edit on Enter and cancel on Escape.
+            // Note that the default behavior consumes key events, so we must 
+            // register this as an event filter to capture it.
+            // Consequently, with Enter, the datePicker's value won't yet have been updated, 
+            // so commit will sent the wrong value. So we must update it ourselves from the
+            // editor's text value.
+            
+            datePicker.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
+                if (event.getCode() == KeyCode.ENTER || event.getCode() == KeyCode.TAB) {
+                    datePicker.setValue(datePicker.getConverter().fromString(datePicker.getEditor().getText()));
+                    commitEdit(LocalDate.from(datePicker.getValue()));
+                }
+                if (event.getCode() == KeyCode.ESCAPE) {
+                    cancelEdit();
+                }
+            });
+            
+            // Modify default mouse behavior on date picker:
+            // Don't hide popup on single click, just set date
+            // On double-click, hide popup and commit edit for editor
+            // Must consume event to prevent default hiding behavior, so
+            // must update date picker value ourselves.
+            
+            // Modify key behavior so that enter on a selected cell commits the edit
+            // on that cell's date.
+            
+            datePicker.setDayCellFactory(picker -> {
+                DateCell cell = new DateCell();
+                cell.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+                    datePicker.setValue(cell.getItem());
+                    if (event.getClickCount() == 2) {
+                        datePicker.hide();
+                        commitEdit(LocalDate.from(cell.getItem()));
+                    }
+                    event.consume();
+                });
+                cell.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+                    if (event.getCode() == KeyCode.ENTER) {
+                        commitEdit(LocalDate.from(datePicker.getValue()));
+                    }
+                });
+                return cell ;
+            });
+ 
+            contentDisplayProperty().bind(Bindings.when(editingProperty())
+                    .then(ContentDisplay.GRAPHIC_ONLY)
+                    .otherwise(ContentDisplay.TEXT_ONLY));
+        }
+        
+        @Override
+        public void updateItem(LocalDate localDate, boolean empty) {
+            super.updateItem(localDate, empty);
+            if (empty) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                setText(formatter.format(localDate));
+                setGraphic(datePicker);
+            }
+        }
+        
+        @Override
+        public void startEdit() {
+            super.startEdit();
+            if (!isEmpty()) {
+                datePicker.setValue(getItem().now());
+            }
+        }
+ 
+    }
 }

@@ -72,4 +72,13 @@ abstract public class Publication implements Serializable {
 				", Title: " + title + 
 				", DateDue: " + getDateDue();
 	}
+	
+	public LendableCopy getCopyByNo(String copyNo){
+		for (LendableCopy copy: this.Copys){
+			if (copy.getCopyNo().equals(copyNo)){
+				return copy;
+			}
+		}
+		return null;
+	}
 }

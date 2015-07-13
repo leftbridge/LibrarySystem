@@ -8,7 +8,7 @@ import Services.UserService;
 
 public class LendableCopy implements Serializable {
 	private Publication publication;
-	private String copyNo;
+	private String copyNo = null;
 	private String memberID = null; // Use Case 7, add member into copy
 	private boolean checkOut = false; // Use Case 7, overdue if after due date and checkIn is false
 
@@ -55,16 +55,21 @@ public class LendableCopy implements Serializable {
 
 	public String checkoutDetail(LendableCopy copy){
 	    LibraryMember member = new UserService().searchMember(copy.getMemberID());
+	    LocalDate dueDate = null;
 	    if (member == null){
 	    	// public LibraryMember(String memberId,String firstName,String lastName,String phone,Address address){
 	    	member = new LibraryMember("N/A", "N/A", "N/A", "N/A", new Address());
+	    	dueDate = copy.publication.getDateDue();
+	    }
+	    else{
+	    	dueDate = member.getRecord().getEntryByCopyNo(copyNo).getDueDate();
 	    }
 
-		return "CopyNo: " + copy.copyNo +
+		return copy.copyNo +
 				"\nMemberID: " + member.getMemberId() +
 				"\nMemberName: " + member.getFirstName() + " " + member.getLastName() +
 				"\nTitle: " + copy.publication.getTitle() +
-				"\nDateDue: " + copy.publication.getDateDue() +
+				"\nDateDue: " + dueDate +
 				"\nIsCheckout: " + copy.isCheckOut();
 	}
 }
