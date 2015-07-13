@@ -593,7 +593,7 @@ public class MemberController {
                         t.getTablePosition().getRow())
                         ).setDueDate(t.getNewValue());
                     // save the updates to storage
-            		da.updateMember(libraryMember);
+            		da.updateMember(libraryMember); // save member checkout record
                 }
             }
         );

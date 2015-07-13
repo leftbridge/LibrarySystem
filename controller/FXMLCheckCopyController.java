@@ -7,8 +7,11 @@ import java.util.List;
 
 import Services.BookService;
 import Services.PeriodicalService;
+import Services.UserService;
 import model.Book;
+import model.CheckoutRecordEntry;
 import model.LendableCopy;
+import model.LibraryMember;
 import model.Periodical;
 import model.Publication;
 import dataAccess.DataAccessFacade;
@@ -89,9 +92,14 @@ public class FXMLCheckCopyController implements FXMLController{
 		if (copy.getPublication() == null) return false;
 		
 		if (copy.getPublication().getDateDue() == null) return false;
-		
-		if (copy.getPublication().getDateDue().isBefore(LocalDate.now()) && copy.isCheckOut()){
-		//if (copy.getPublication().getDateDue().isAfter(LocalDate.now()) && copy.isCheckOut()){
+		LibraryMember mem = new UserService().searchMember(copy.getMemberID());
+		if (mem != null){
+			CheckoutRecordEntry entry = mem.getRecord().getEntryByCopyNo(copyID);
+			//if (copy.getPublication().getDateDue().isBefore(LocalDate.now()) && copy.isCheckOut()){
+			if (entry.getDueDate().isBefore(LocalDate.now()) && copy.isCheckOut()){
+				return true;
+			}
+		}else if (copy.getPublication().getDateDue().isBefore(LocalDate.now()) && copy.isCheckOut()){
 			return true;
 		}
 		

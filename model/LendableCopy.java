@@ -55,16 +55,21 @@ public class LendableCopy implements Serializable {
 
 	public String checkoutDetail(LendableCopy copy){
 	    LibraryMember member = new UserService().searchMember(copy.getMemberID());
+	    LocalDate dueDate = null;
 	    if (member == null){
 	    	// public LibraryMember(String memberId,String firstName,String lastName,String phone,Address address){
 	    	member = new LibraryMember("N/A", "N/A", "N/A", "N/A", new Address());
+	    	dueDate = copy.publication.getDateDue();
+	    }
+	    else{
+	    	dueDate = member.getRecord().getEntryByCopyNo(copyNo).getDueDate();
 	    }
 
 		return copy.copyNo +
 				"\nMemberID: " + member.getMemberId() +
 				"\nMemberName: " + member.getFirstName() + " " + member.getLastName() +
 				"\nTitle: " + copy.publication.getTitle() +
-				"\nDateDue: " + copy.publication.getDateDue() +
+				"\nDateDue: " + dueDate +
 				"\nIsCheckout: " + copy.isCheckOut();
 	}
 }
