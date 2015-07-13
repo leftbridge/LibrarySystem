@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import model.LambdaLibrary;
 import model.LibraryMember;
 import dataAccess.DataAccessFacade;
 import dataAccess.StorageType;
@@ -49,12 +50,17 @@ public class UserService {
 	}
 
 	public List<LibraryMember> getAllMembers(){
-		List<LibraryMember> libraryMembers=new ArrayList<>();
+		List<LibraryMember> libraryMembers=new ArrayList<LibraryMember>();
 		members=getUserMap();
 		for(LibraryMember member:members.values()){
 			libraryMembers.add(member);
 		}
 		return libraryMembers;
+	}
+	
+	public List<LibraryMember> getAllMembersLambda(){
+		members=getUserMap();
+		return LambdaLibrary.GETALLMEMBERS.apply(members);
 	}
 
 }

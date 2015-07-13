@@ -1,5 +1,7 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,4 +19,17 @@ public class LambdaLibrary {
 		   = (list) -> list.stream()
 		   				.forEach(c -> System.out.println(c.toString()));
 
+	/*	public List<LibraryMember> getAllMembers(){
+		List<LibraryMember> libraryMembers=new ArrayList<>();
+		members=getUserMap();
+		for(LibraryMember member:members.values()){
+			libraryMembers.add(member);
+		}
+		return libraryMembers;
+	}*/
+	public final static Function<HashMap<String, LibraryMember>, List<LibraryMember>> GETALLMEMBERS
+			= (hashMap) -> hashMap.entrySet()
+						.stream()
+						.map(x -> x.getValue())
+						.collect(Collectors.toList());
 }

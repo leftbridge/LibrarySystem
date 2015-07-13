@@ -36,7 +36,8 @@ public class MemberController {
 
     public void showAllMembers(){
 
-        List<LibraryMember> members = new UserService().getAllMembers();
+        //List<LibraryMember> members = new UserService().getAllMembers();
+        List<LibraryMember> members = new UserService().getAllMembersLambda();
 
         final ObservableList<LibraryMember> libraryMembers =
                 FXCollections.observableArrayList(
